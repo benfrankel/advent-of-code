@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
-	"bufio"
 	"strconv"
 )
 
@@ -24,7 +24,7 @@ func main() {
 		token := in.Text()
 		delta, err := strconv.Atoi(token)
 		check(err)
-		
+
 		freq += delta
 	}
 

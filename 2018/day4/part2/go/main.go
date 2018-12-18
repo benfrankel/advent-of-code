@@ -28,13 +28,13 @@ func Intersects(a claim, b claim) bool {
 
 func main() {
 	intact := make(map[claim]bool)
-	re := regexp.MustCompile("^#(\\d+) @ (\\d+),(\\d+): (\\d+)x(\\d+)$")
 
 	f, err := os.Open("../input")
 	check(err)
 	defer f.Close()
 
 	in := bufio.NewScanner(f)
+	re := regexp.MustCompile("^#(\\d+) @ (\\d+),(\\d+): (\\d+)x(\\d+)$")
 	for in.Scan() {
 		line := in.Text()
 		match := re.FindStringSubmatch(line)

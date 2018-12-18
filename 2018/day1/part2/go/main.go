@@ -44,17 +44,17 @@ func main() {
 			fmt.Println(freq)
 			return
 		}
-		
+
 		seen[freq] = true
 
 		token := in.Text()
 		delta, err := strconv.Atoi(token)
 		check(err)
-		
+
 		deltas = Append(deltas, delta)
 		freq += delta
 	}
-	
+
 	check(in.Err())
 
 	for {
@@ -63,7 +63,7 @@ func main() {
 				fmt.Println(freq)
 				return
 			}
-			
+
 			seen[freq] = true
 			freq += delta
 		}

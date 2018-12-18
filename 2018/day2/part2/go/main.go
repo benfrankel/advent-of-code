@@ -29,12 +29,12 @@ func main() {
 
 		for k := 0; k < len(id); k++ {
 			s := id[:k] + id[k+1:]
-			
+
 			sample := struct {
 				int
 				string
 			}{k, s}
-			
+
 			if seen[sample] {
 				fmt.Println(s)
 				return

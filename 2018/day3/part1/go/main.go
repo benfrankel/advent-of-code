@@ -21,32 +21,34 @@ type point struct {
 
 func main() {
 	count := make(map[point]int)
+	re := regexp.MustCompile("^#\\d+ @ (\\d+),(\\d+): (\\d+)x(\\d+)$")
 
 	f, err := os.Open("../input")
 	check(err)
 	defer f.Close()
 
 	in := bufio.NewScanner(f)
-	re := regexp.MustCompile("^#\\d+ @ (\\d+),(\\d+): (\\d+)x(\\d+)$")
 	for in.Scan() {
 		line := in.Text()
 		match := re.FindStringSubmatch(line)
-		
-		x, err := strconv.Atoi(match[1])
+
+		l, err := strconv.Atoi(match[1])
 		check(err)
 
-		y, err := strconv.Atoi(match[2])
+		t, err := strconv.Atoi(match[2])
 		check(err)
 
 		w, err := strconv.Atoi(match[3])
 		check(err)
+		r := l + w
 
 		h, err := strconv.Atoi(match[4])
 		check(err)
+		b := t + h
 
-		for i := x; i < x + w; i++ {
-			for j := y; j < y + h; j++ {
-				count[point {i, j}]++
+		for i := l; i < r; i++ {
+			for j := t; j < b; j++ {
+				count[point{i, j}]++
 			}
 		}
 	}
