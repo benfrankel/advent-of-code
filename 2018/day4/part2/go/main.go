@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 )
 
@@ -14,62 +15,153 @@ func check(e error) {
 	}
 }
 
-type claim struct {
-	id int
-	l  int
-	r  int
-	t  int
-	b  int
+type timestamp struct {
+	year   int
+	month  int
+	day    int
+	hour   int
+	minute int
 }
 
-func Intersects(a claim, b claim) bool {
-	return a.id != b.id && a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b
+type event struct {
+	awake bool
+	guard int
+}
+
+func Append(slice []timestamp, t timestamp) []timestamp {
+	l := len(slice)
+
+	if l >= cap(slice) {
+		newSlice := make([]timestamp, cap(slice)*2)
+		copy(newSlice, slice)
+		slice = newSlice
+	}
+
+	slice = slice[0 : l+1]
+	slice[l] = t
+
+	return slice
+}
+
+type chrono []timestamp
+
+func (t chrono) Len() int {
+	return len(t)
+}
+
+func (t chrono) Swap(i, j int) {
+	t[i], t[j] = t[j], t[i]
+}
+
+func (t chrono) Less(i, j int) bool {
+	if t[i].year == t[j].year {
+		if t[i].month == t[j].month {
+			if t[i].day == t[j].day {
+				if t[i].hour == t[j].hour {
+					return t[i].minute < t[j].minute
+				}
+				return t[i].hour < t[j].hour
+			}
+			return t[i].day < t[j].day
+		}
+		return t[i].month < t[j].month
+	}
+	return t[i].year < t[j].year
 }
 
 func main() {
-	intact := make(map[claim]bool)
+	history := make(map[timestamp]event)
+	times := make([]timestamp, 0, 10)
+	sleepiness := make(map[int]int)
+	freq := make(map[int][60]int)
+
+	re := regexp.MustCompile("^\\[(\\d+)\\-(\\d+)\\-(\\d+) (\\d+):(\\d+)\\] (Guard #(\\d+) begins shift|falls asleep|wakes up)$")
 
 	f, err := os.Open("../input")
 	check(err)
 	defer f.Close()
 
 	in := bufio.NewScanner(f)
-	re := regexp.MustCompile("^#(\\d+) @ (\\d+),(\\d+): (\\d+)x(\\d+)$")
 	for in.Scan() {
 		line := in.Text()
 		match := re.FindStringSubmatch(line)
 
-		id, err := strconv.Atoi(match[1])
+		year, err := strconv.Atoi(match[1])
 		check(err)
 
-		l, err := strconv.Atoi(match[2])
+		month, err := strconv.Atoi(match[2])
 		check(err)
 
-		t, err := strconv.Atoi(match[3])
+		day, err := strconv.Atoi(match[3])
 		check(err)
 
-		w, err := strconv.Atoi(match[4])
+		hour, err := strconv.Atoi(match[4])
 		check(err)
 
-		h, err := strconv.Atoi(match[5])
+		minute, err := strconv.Atoi(match[5])
 		check(err)
 
-		c1 := claim{id, l, l + w, t, t + h}
-
-		intact[c1] = true
-		for c2, _ := range intact {
-			if Intersects(c1, c2) {
-				intact[c1] = false
-				intact[c2] = false
-			}
+		guard := -1
+		message := match[6]
+		if message[0] == 'G' {
+			guard, err = strconv.Atoi(match[7])
+			check(err)
 		}
+
+		awake := message[0] != 'f'
+
+		t := timestamp{year, month, day, hour, minute}
+		e := event{awake, guard}
+
+		history[t] = e
+		times = Append(times, t)
 	}
 	check(in.Err())
 
-	for c, i := range intact {
-		if i {
-			fmt.Println(c.id)
-			break
+	sort.Sort(chrono(times))
+	guard := -1
+	bedtime := -1
+	bestGuard := -1
+	bestSleepiness := -1
+	for _, t := range times {
+		ev := history[t]
+		
+		if ev.guard != -1 {
+			guard = ev.guard
+		} else if ev.awake && bedtime != -1 {
+			fs := freq[guard]
+			bestFreq := -1
+			for minute := bedtime; minute < t.minute; minute++ {
+				fs[minute]++
+				
+				if bestFreq < fs[minute] {
+					bestFreq = fs[minute]
+				}
+			}
+			freq[guard] = fs
+
+			if sleepiness[guard] < bestFreq {
+				sleepiness[guard] = bestFreq
+				if bestSleepiness < bestFreq {
+					bestSleepiness = bestFreq
+					bestGuard = guard
+				}
+			}
+			
+			bedtime = -1
+		} else if !ev.awake && bedtime == -1 {
+			bedtime = t.minute
 		}
 	}
+
+	bestMinute := -1
+	bestFreq := -1
+	for minute, f := range freq[bestGuard] {
+		if bestFreq < f {
+			bestFreq = f
+			bestMinute = minute
+		}
+	}
+
+	fmt.Println(bestGuard * bestMinute)
 }
