@@ -13,21 +13,6 @@ func check(e error) {
 	}
 }
 
-func Append(slice []int, n int) []int {
-	l := len(slice)
-
-	if l >= cap(slice) {
-		newSlice := make([]int, cap(slice)*2)
-		copy(newSlice, slice)
-		slice = newSlice
-	}
-
-	slice = slice[0 : l+1]
-	slice[l] = n
-
-	return slice
-}
-
 func main() {
 	freq := 0
 	seen := make(map[int]bool)
@@ -51,7 +36,7 @@ func main() {
 		delta, err := strconv.Atoi(token)
 		check(err)
 
-		deltas = Append(deltas, delta)
+		deltas = append(deltas, delta)
 		freq += delta
 	}
 

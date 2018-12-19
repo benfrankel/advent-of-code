@@ -28,21 +28,6 @@ type event struct {
 	guard int
 }
 
-func Append(slice []timestamp, t timestamp) []timestamp {
-	l := len(slice)
-
-	if l >= cap(slice) {
-		newSlice := make([]timestamp, cap(slice)*2)
-		copy(newSlice, slice)
-		slice = newSlice
-	}
-
-	slice = slice[0 : l+1]
-	slice[l] = t
-
-	return slice
-}
-
 type chrono []timestamp
 
 func (t chrono) Len() int {
@@ -114,7 +99,7 @@ func main() {
 		e := event{awake, guard}
 
 		history[t] = e
-		times = Append(times, t)
+		times = append(times, t)
 	}
 	check(in.Err())
 
