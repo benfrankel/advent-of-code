@@ -57,7 +57,7 @@ func main() {
 		c1 := claim{id, l, l + w, t, t + h}
 
 		intact[c1] = true
-		for c2, _ := range intact {
+		for c2 := range intact {
 			if Intersects(c1, c2) {
 				intact[c1] = false
 				intact[c2] = false

@@ -1,12 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
-	"os"
-	"regexp"
-	"sort"
-	"strconv"
+	"io/ioutil"
+	"unicode"
 )
 
 func check(e error) {
@@ -15,153 +12,88 @@ func check(e error) {
 	}
 }
 
-type timestamp struct {
-	year   int
-	month  int
-	day    int
-	hour   int
-	minute int
+func Equiv(a byte, b byte) bool {
+	return unicode.ToLower(rune(a)) == unicode.ToLower(rune(b))
 }
 
-type event struct {
-	awake bool
-	guard int
+func React(a byte, b byte) bool {
+	return a != b && Equiv(a, b)
 }
 
-func Append(slice []timestamp, t timestamp) []timestamp {
-	l := len(slice)
+func Reduce(s []byte, a byte) int {
+	length := len(s)
 
-	if l >= cap(slice) {
-		newSlice := make([]timestamp, cap(slice)*2)
-		copy(newSlice, slice)
-		slice = newSlice
+	if len(s) <= 0 {
+		return 0
 	}
 
-	slice = slice[0 : l+1]
-	slice[l] = t
+	var i int
+	for i = 0; i < len(s) && Equiv(s[i], a); i++ {
+		length--
+		s[i] = ' '
+	}
 
-	return slice
-}
+	if i >= len(s) {
+		return 0
+	}
 
-type chrono []timestamp
-
-func (t chrono) Len() int {
-	return len(t)
-}
-
-func (t chrono) Swap(i, j int) {
-	t[i], t[j] = t[j], t[i]
-}
-
-func (t chrono) Less(i, j int) bool {
-	if t[i].year == t[j].year {
-		if t[i].month == t[j].month {
-			if t[i].day == t[j].day {
-				if t[i].hour == t[j].hour {
-					return t[i].minute < t[j].minute
-				}
-				return t[i].hour < t[j].hour
-			}
-			return t[i].day < t[j].day
+	for j := i + 1; j < len(s); j++ {
+		for ; j < len(s) && Equiv(s[j], a); j++ {
+			length--
+			s[j] = ' '
 		}
-		return t[i].month < t[j].month
+
+		if j >= len(s) {
+			break
+		}
+
+		if React(s[i], s[j]) {
+			length -= 2
+			s[i] = ' '
+			s[j] = ' '
+
+			for i > 0 && s[i] == ' ' {
+				i--
+			}
+
+			if i < 0 {
+				j++
+				i = j
+			}
+		} else {
+			i = j
+		}
 	}
-	return t[i].year < t[j].year
+
+	return length
 }
 
 func main() {
-	history := make(map[timestamp]event)
-	times := make([]timestamp, 0, 10)
-	sleepiness := make(map[int]int)
-	freq := make(map[int][60]int)
-
-	re := regexp.MustCompile("^\\[(\\d+)\\-(\\d+)\\-(\\d+) (\\d+):(\\d+)\\] (Guard #(\\d+) begins shift|falls asleep|wakes up)$")
-
-	f, err := os.Open("../input")
+	s, err := ioutil.ReadFile("../input")
 	check(err)
-	defer f.Close()
+	s = s[:len(s)-1]
 
-	in := bufio.NewScanner(f)
-	for in.Scan() {
-		line := in.Text()
-		match := re.FindStringSubmatch(line)
+	length := Reduce(s, '!')
 
-		year, err := strconv.Atoi(match[1])
-		check(err)
-
-		month, err := strconv.Atoi(match[2])
-		check(err)
-
-		day, err := strconv.Atoi(match[3])
-		check(err)
-
-		hour, err := strconv.Atoi(match[4])
-		check(err)
-
-		minute, err := strconv.Atoi(match[5])
-		check(err)
-
-		guard := -1
-		message := match[6]
-		if message[0] == 'G' {
-			guard, err = strconv.Atoi(match[7])
-			check(err)
-		}
-
-		awake := message[0] != 'f'
-
-		t := timestamp{year, month, day, hour, minute}
-		e := event{awake, guard}
-
-		history[t] = e
-		times = Append(times, t)
-	}
-	check(in.Err())
-
-	sort.Sort(chrono(times))
-	guard := -1
-	bedtime := -1
-	bestGuard := -1
-	bestSleepiness := -1
-	for _, t := range times {
-		ev := history[t]
-		
-		if ev.guard != -1 {
-			guard = ev.guard
-		} else if ev.awake && bedtime != -1 {
-			fs := freq[guard]
-			bestFreq := -1
-			for minute := bedtime; minute < t.minute; minute++ {
-				fs[minute]++
-				
-				if bestFreq < fs[minute] {
-					bestFreq = fs[minute]
-				}
-			}
-			freq[guard] = fs
-
-			if sleepiness[guard] < bestFreq {
-				sleepiness[guard] = bestFreq
-				if bestSleepiness < bestFreq {
-					bestSleepiness = bestFreq
-					bestGuard = guard
-				}
-			}
-			
-			bedtime = -1
-		} else if !ev.awake && bedtime == -1 {
-			bedtime = t.minute
+	t := make([]byte, length)
+	i := 0
+	for _, c := range s {
+		if c != ' ' {
+			t[i] = c
+			i++
 		}
 	}
 
-	bestMinute := -1
-	bestFreq := -1
-	for minute, f := range freq[bestGuard] {
-		if bestFreq < f {
-			bestFreq = f
-			bestMinute = minute
+	bestLength := length
+	for unit := byte('a'); unit <= byte('z'); unit++ {
+		tmp := make([]byte, len(t))
+		copy(tmp, t)
+		reducedLength := Reduce(tmp, unit)
+
+		if bestLength > reducedLength {
+			bestLength = reducedLength
 		}
 	}
 
-	fmt.Println(bestGuard * bestMinute)
+	fmt.Println(bestLength)
 }

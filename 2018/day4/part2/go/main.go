@@ -125,7 +125,7 @@ func main() {
 	bestSleepiness := -1
 	for _, t := range times {
 		ev := history[t]
-		
+
 		if ev.guard != -1 {
 			guard = ev.guard
 		} else if ev.awake && bedtime != -1 {
@@ -133,7 +133,7 @@ func main() {
 			bestFreq := -1
 			for minute := bedtime; minute < t.minute; minute++ {
 				fs[minute]++
-				
+
 				if bestFreq < fs[minute] {
 					bestFreq = fs[minute]
 				}
@@ -147,7 +147,7 @@ func main() {
 					bestGuard = guard
 				}
 			}
-			
+
 			bedtime = -1
 		} else if !ev.awake && bedtime == -1 {
 			bedtime = t.minute
