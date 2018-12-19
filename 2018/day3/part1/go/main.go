@@ -21,7 +21,7 @@ type point struct {
 
 func main() {
 	count := make(map[point]int)
-	re := regexp.MustCompile("^#\\d+ @ (\\d+),(\\d+): (\\d+)x(\\d+)$")
+	re := regexp.MustCompile(`^#\d+ @ (\d+),(\d+): (\d+)x(\d+)$`)
 
 	f, err := os.Open("../input")
 	check(err)

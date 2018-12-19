@@ -75,7 +75,7 @@ func main() {
 	sleepiness := make(map[int]int)
 	freq := make(map[int][60]int)
 
-	re := regexp.MustCompile(`^\[(\d+)\-(\d+)\-(\d+) (\d+):(\d+)\] (Guard #(\d+) begins shift|falls asleep|wakes up)$`)
+	re := regexp.MustCompile("^\\[(\\d+)\\-(\\d+)\\-(\\d+) (\\d+):(\\d+)\\] (Guard #(\\d+) begins shift|falls asleep|wakes up)$")
 
 	f, err := os.Open("../input")
 	check(err)
@@ -129,17 +129,24 @@ func main() {
 		if ev.guard != -1 {
 			guard = ev.guard
 		} else if ev.awake && bedtime != -1 {
-			sleepiness[guard] += t.minute - bedtime
-			if bestSleepiness < sleepiness[guard] {
-				bestSleepiness = sleepiness[guard]
-				bestGuard = guard
-			}
-			
 			fs := freq[guard]
+			bestFreq := -1
 			for minute := bedtime; minute < t.minute; minute++ {
 				fs[minute]++
+				
+				if bestFreq < fs[minute] {
+					bestFreq = fs[minute]
+				}
 			}
 			freq[guard] = fs
+
+			if sleepiness[guard] < bestFreq {
+				sleepiness[guard] = bestFreq
+				if bestSleepiness < bestFreq {
+					bestSleepiness = bestFreq
+					bestGuard = guard
+				}
+			}
 			
 			bedtime = -1
 		} else if !ev.awake && bedtime == -1 {

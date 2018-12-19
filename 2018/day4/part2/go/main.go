@@ -75,7 +75,7 @@ func main() {
 	sleepiness := make(map[int]int)
 	freq := make(map[int][60]int)
 
-	re := regexp.MustCompile("^\\[(\\d+)\\-(\\d+)\\-(\\d+) (\\d+):(\\d+)\\] (Guard #(\\d+) begins shift|falls asleep|wakes up)$")
+	re := regexp.MustCompile(`^\[(\d+)\-(\d+)\-(\d+) (\d+):(\d+)\] (Guard #(\d+) begins shift|falls asleep|wakes up)$`)
 
 	f, err := os.Open("../input")
 	check(err)

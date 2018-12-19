@@ -28,7 +28,7 @@ func Intersects(a claim, b claim) bool {
 
 func main() {
 	intact := make(map[claim]bool)
-	re := regexp.MustCompile("^#(\\d+) @ (\\d+),(\\d+): (\\d+)x(\\d+)$")
+	re := regexp.MustCompile(`^#(\d+) @ (\d+),(\d+): (\d+)x(\d+)$`)
 
 	f, err := os.Open("../input")
 	check(err)
